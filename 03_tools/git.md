@@ -22,3 +22,8 @@
 
     git commit --amend  
 
+### go back to the history
+
+    git reset --hard commit_id  # where commit_id can be replaced by HEAD^/HEAD^^
+
+
