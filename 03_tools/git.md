@@ -26,4 +26,12 @@
 
     git reset --hard commit_id  # where commit_id can be replaced by HEAD^/HEAD^^
 
+### patch
 
+    git diff CMakeLists.txt > patch01CMakeList
+    or
+    diff -u hello.c hello_new.c > hello.patch
+
+usage(-p[num] tells the patch command to skip 3 leading slashes from the filenames present in the patch file.):
+    
+    patch -p[num] < patchfile
