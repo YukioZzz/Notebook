@@ -33,3 +33,24 @@ run -it and specify a volume, 原理是将当前tty attach到内部的shell的st
 
     docker run -it ltmapper /bin/bash
 
+### GUI-application
+
+Give docker the rights to access the X-Server with:
+
+    xhost +local:docker
+
+Set cmd correctly
+
+    docker run -ti --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix image-name /bin/bash
+
+### rm
+
+rm all stopped containers
+
+    docker container prune
+
+rm all images with the name none
+
+    docker images | grep none | awk '{ print $3;}' | xargs docker rmi
+
+

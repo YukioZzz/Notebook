@@ -18,3 +18,11 @@
     
     - e.g. upgrade gcc from 7.x to the latest version, `-y` means `--yes` or `--assume-yes`, so no need to wait for the user's input
       - apt-get upgrade -y gcc 
+
+### netstat
+
+lsof maybe invalid when the port is occupied by other user
+
+so use the following cmd
+
+    sudo netstat -tulpn

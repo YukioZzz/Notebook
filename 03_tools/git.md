@@ -14,7 +14,14 @@
 
     git pull upstream master
 
-### merge commits
+### merge
+
+merge `branchB` into `branchA`
+
+    git checkout branchA
+    git merge branchB
+
+merge commits
     
     git rebase -i <commit_sha> 
 
@@ -25,6 +32,11 @@
 ### go back to the history
 
     git reset --hard commit_id  # where commit_id can be replaced by HEAD^/HEAD^^
+
+### Overwrite local files
+    
+    git fetch --all
+    git reset --hard origin/master
 
 ### patch
 
