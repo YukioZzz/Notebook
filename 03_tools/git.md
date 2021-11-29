@@ -14,6 +14,11 @@
 
     git pull upstream master
 
+### change git remote
+
+    git remote remove origin
+    git remote add origin git@github.com:YukioZzz/xxx.git
+
 ### merge
 
 merge `branchB` into `branchA`

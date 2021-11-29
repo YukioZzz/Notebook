@@ -33,6 +33,12 @@ run -it and specify a volume, 原理是将当前tty attach到内部的shell的st
 
     docker run -it ltmapper /bin/bash
 
+### 关于user
+由于一般情况下构建Image和运行docker的不是同一个用户，仍是需要靠传参完成。
+可参考[链接](https://faun.pub/set-current-host-user-for-docker-container-4e521cef9ffc)
+
+docker-compose 情形下有关键字`user`可以进行指定，但仍需要使用环境变量传参
+
 ### GUI-application
 
 Give docker the rights to access the X-Server with:
