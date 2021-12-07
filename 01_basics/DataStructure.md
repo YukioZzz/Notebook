@@ -417,6 +417,79 @@ B 树、B+ 树图片
 > * m：代表数据的最大值减最小值
 > * 来自：[wikipedia . 排序算法](https://zh.wikipedia.org/wiki/%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95)
 
+#### QuickSort
+```C++
+//LUG版//注意LUG`和DUP的优点，没想到最开始的版本还有优点。。
+template <class RandomIt>
+RandomIt partition(RandomIt first,RandomIt last){       //[first, last) //为了避免赋值还是要使用迭代器
+    swap(*first, *(first + rand() % (last - first)) );  //注意这步优化点
+    auto pivot = *first;
+    --last;
+    while(first<last){
+        while(first<last && *last>=pivot)--last;        //都取等号，减少交换次数
+        *first = *last;                                 //实际上不需要swap(*first,*last);
+        while(first<last && *first<=pivot)++first;
+        *last = *first;                                 //直接这样就行，循环内不用再做++first,--last;无非再判断一遍,但是就借用了first<last的判断
+    }
+    *first = pivot;
+    return first;
+}
+
+//LGU版:关键在于怎么返回轴点位置，直接学习
+//原来如此，直接保存在first里，最后归位即可
+template <class RandomIt>
+RandomIt partition_(RandomIt first, RandomIt last){     //[first, last)
+    auto pivot = *first;
+    auto mi = first;                                    //指向L的最后一个元素
+    for(auto iter = first+1; iter<last; ++iter)
+        if(*iter<pivot)
+	    swap(*(++mi),*iter);                        //这里不得不交换了，因为是在滚动
+    swap(*first, *mi);
+    return mi;
+}
+
+template <class RandomIt> //如何保证来着
+void qsort(RandomIt first,RandomIt last){
+    if(last - first < 2) return;                  //if(first==last||next(first,1)==last)return;
+    auto iter = partition_(first, last);
+    qsort(first,iter);                            //[)前开后闭
+    qsort(iter+1,last);                           //这里一定得缩小区间，去掉iter本身，否则会出不来
+}
+```
+
+含有大量重复元素(Duplicate keys)时，采用`3-way partitions`,代码和思路见下，注意初始化
+
+参见[链接](https://blog.csdn.net/Peggy_Chang/article/details/79451565)
+
+```java
+/*  -------------------------
+ *  | < v| = v |\\\\\\| > v |
+ *  -------------------------
+ *        ↑lt   ↑i   ↑gt
+**/
+private static void sort(Comparable[] a, int lo, int hi)
+{
+    if (hi <= lo) return;
+    int lt = lo, gt = hi;
+    Comparable v = a[lo];
+    int i = lo;
+    while(i <= gt)
+    {
+        int cmp = a[i].compareTo(v);
+        if(cmp < 0)
+            swap(a[lt++], a[i++]);
+        else if(cmp > 0) 
+            swap(a[i], a[gt--]);
+        else i++;
+}
+
+sort(a, lo, lt - 1);
+sort(a, gt + 1, hi);
+}
+```
+
+
+
 ### 查找
 
 查找算法 | 平均时间复杂度 | 空间复杂度 | 查找条件

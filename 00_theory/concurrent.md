@@ -131,6 +131,74 @@ void IncrementSharedValue10000000Times(RandomDelay& randomDelay)
 有些特殊情况要注意下，如
 - 线程获取锁后被调度/中断
 
+### RCU
+详见[文档](https://www.kernel.org/doc/Documentation/RCU/whatisRCU.txt)
+
+#### what is RCU
+RCU is a synchronization mechanism that was added to the Linux kernel
+during the 2.5 development effort that is optimized for read-mostly
+situations. 
+
+涉及如下问题
+
+1.	RCU OVERVIEW
+2.	WHAT IS RCU'S CORE API?
+3.	WHAT ARE SOME EXAMPLE USES OF CORE RCU API? (example uses)
+4.	WHAT IF MY UPDATING THREAD CANNOT BLOCK? (example uses)
+5.	WHAT ARE SOME SIMPLE IMPLEMENTATIONS OF RCU?
+6.	ANALOGY WITH READER-WRITER LOCKING
+7.	FULL LIST OF RCU APIs
+8.	ANSWERS TO QUICK QUIZZES
+
+#### 1.  RCU OVERVIEW
+
+RCU的基本思想是将`update更新`操作分解为`removal移除`操作和`reclamation回收`操作。移除阶段将移除数据项的引用，且可以与读者同步进行，这依赖于现代CPU确保读者读取到完整非撕裂的数据。回收阶段将在所有读者不再引用数据项后进行。
+
+上述分解使得写者能够立即进行移除操作，并在回收阶段`通过阻塞等待或注册回调函数`延后到`所有移除阶段活跃的读者结束读取`。注意，任何在移除阶段后的读者将不会得到目标项的引用，也就无法打断回收阶段。
+
+所以RCU一般性更新序列即为：
+
+a. 移除指针(removal phase)
+b. 等待前序读者结束读端临界区
+c. 释放指针(reclamation phase)
+
+b项是延迟销毁的关键点，这种等待使得RCU读者可以使用用非常轻量的同步方式，甚至无需同步。作为对比，在传统基于锁的实现中，读者必须使用重量级同步才能防止写者篡改数据，因为传统方式一般原地更新数据项，所以要做互斥处理。而RCU写者利用了现代CPU原子性更新指针的优势，使得能够在不打扰读者的情况下原子性插入、移除或替换链表节点。RCU读者则能够继续访问旧数据，并能够免除原子操作、内存屏障、cache misses甚至是锁竞争这些在现代SMP计算机系统中代价颇大的行为。
+
+#### 2.  WHAT IS RCU'S CORE API?
+
+The core RCU API is quite small:
+
+a.	`rcu_read_lock()`: 读者通知reclaimer释放线程，读者已进入读端临界区。(在RCU读端关键部分阻塞是非法的，尽管使用CONFIG_PREEMPT_RCU构建的内核可以抢占RCU读取端临界区。在 RCU 读端临界区期间访问的任何受 RCU 保护的数据结构都保证在该临界区的整个持续时间内保持不被回收。 引用计数可以与RCU结合使用，以维护对数据结构的长期引用。)
+b.	`rcu_read_unlock()`:读者通知reclaimer释放线程,读者已离开读端临界区。请注意，RCU 读取端临界区可能会嵌套和/或重叠。
+c.	`synchronize_rcu()` / `call_rcu()`: `synchronize_rcu()`标记更新代码的结束和回收代码的开始。 它会`阻塞`到所有CPU上的所有之前进入的RCU读取端临界区都退出。 注意，它不一定要等待任何后续的RCU读端临界区完成，只等待正在进行的读端临界区完成。同时，它也不是立即执行的，而是有调度时延。并且很多实现上都会使用批处理请求的方式来提高效率，这也引入了时延。  因为该函数会侦测读端何时结束，其实现非常重要。`call_rcu()`则是前者的回调函数形式。该形式在不能阻塞或更新端性能非常重要时非常有用。 但是，不应轻易使用`call_rcu()` API，因为使用`synchronized_rcu()` API通常会产生更简单的代码。 此外，如果宽限期延迟, `synchronize_rcu()` API具有自动限制更新率的良好属性。 此属性导致系统在面对拒绝服务攻击时具有弹性。 使用`call_rcu()`的代码应该限制更新率以获得同样的弹性。 有关限制更新速率的一些方法，请参阅 checklist.txt。
+d.	`rcu_assign_pointer()`:该函数被实现为宏。updater使用该函数来给RCU保护的指针赋一个新值，以使得能够将值得变通从updater通知到reader。该宏不会计算为右值，但它会执行特定CPU架构所需的任何内存屏障指令。 也许同样重要的是，它用于记录 (1) 哪些指针受 RCU 保护，以及 (2) 给定结构可被其他 CPU 访问的点。 也就是说， rcu_assign_pointer() 最常被 _rcu 链表操作原语，例如 list_add_rcu()间接使用，。
+
+e.	`rcu_dereference()`：和前者一样，也必须被实现为宏。读者使用该API来获取一个被RCU保护得指针，该指针返回一个可以安全解引用的值。 请注意， rcu_dereference() 实际上并没有对指针解引用，相反，它保护指针以供以后解引用。 它还为给定的 CPU 架构执行任何所需的内存屏障指令。 目前，只有 Alpha 需要 rcu_dereference() 中的内存屏障——在其他 CPU 上，它编译为空，甚至不需要编译器指令。 一般情况下时将返回值赋值给一个局部指针变量，并对局部指针解引用。请注意，rcu_dereference() 返回的值仅在封闭的 RCU 读端临界区内有效。与 rcu_assign_pointer() 一样，rcu_dereference() 的一个重要功能是记录哪些指针受 RCU 保护，特别是标记随时可能更改的指针，包括在 rcu_dereference() 之后立即更改。 而且，与 rcu_assign_pointer() 一样，rcu_dereference() 通常通过 _rcu 列表操作原语间接使用，例如 list_for_each_entry_rcu()。
+
+3.  WHAT ARE SOME EXAMPLE USES OF CORE RCU API?
+
+略
+
+主要以问题点在于
+
+1. synchronize_rcu发生在reader之前，reader会阻塞吗，如何保证读到的数据一致。即写者仍会受读者阻塞但读者不会受到写者阻塞吗。
+
+        rcu_assign_pointer(gp, NULL);
+        spin_unlock(&gp_lock);
+        synchronize_rcu();
+
+答： 应该不会，旧的reader直接督导old_gp，新来的reader读到新的new_gp，完全不搭界，因为对gp的访问仍都是原子的。synchronize_rcu只是在等待宽限期后释放原节点而已。
+
+2. 发布订阅机制的有效性依靠dereference()和assign_pointer()保证。
+
+3. 
+| Given that multiple CPUs can start RCU read-side critical sections at |
+| any time without any ordering whatsoever, how can RCU possibly tell   |
+| whether or not a given RCU read-side critical section starts before a |
+| given instance of ``synchronize_rcu()``?                              |
+
+参考[文档](https://www.kernel.org/doc/Documentation/RCU/Design/Requirements/Requirements.html)
+
 ### C/C++ 
 [C memory order](https://en.cppreference.com/w/c/atomic/memory_order)   
 

@@ -1293,9 +1293,17 @@ int main(){
 [unordered_map](https://github.com/huihut/interview/tree/master/STL#unordered_map)|哈希表|插入、删除、查找 O(1) 最差 O(n)|无序|不可重复|
 [unordered_multimap](https://github.com/huihut/interview/tree/master/STL#unordered_multimap)|哈希表|插入、删除、查找 O(1) 最差 O(n)|无序|可重复|
 
+
+#### STL迭代器
+- 前进后退： `auto nx = std::next(it, 2); auto pv = std::prev(it, 2);`此处可以是负值，边界条件注意下
+- 上述俩函数实现原理实际是基于`advance`: ../`void advance( InputIt& it, Distance n );`
+
+
+
 ### STL 算法
 
 算法 | 底层算法 | 时间复杂度 | 可不可重复
 ---|---|---|---
 [find](http://www.cplusplus.com/reference/algorithm/find/)|顺序查找|O(n)|可重复
 [sort](https://github.com/gcc-mirror/gcc/blob/master/libstdc++-v3/include/bits/stl_algo.h#L4808)|[内省排序](https://en.wikipedia.org/wiki/Introsort)|O(n*log<sub>2</sub>n)|可重复
+
