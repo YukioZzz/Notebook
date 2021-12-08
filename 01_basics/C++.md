@@ -1298,7 +1298,10 @@ int main(){
 - 前进后退： `auto nx = std::next(it, 2); auto pv = std::prev(it, 2);`此处可以是负值，边界条件注意下
 - 上述俩函数实现原理实际是基于`advance`: ../`void advance( InputIt& it, Distance n );`
 
+#### 各个容器的基本操作
+特别注意map等容器删除
 
+List的操作如LRU的实现
 
 ### STL 算法
 

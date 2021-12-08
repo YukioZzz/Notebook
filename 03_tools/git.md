@@ -52,3 +52,10 @@ merge commits
 usage(-p[num] tells the patch command to skip 3 leading slashes from the filenames present in the patch file.):
     
     patch -p[num] < patchfile
+
+### delete file and its history
+删除文件命令如下(若是文件夹，加参数`-r`即可)：
+
+    git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch targetFile' --prune-empty --tag-name-filter cat -- --all
+
+
