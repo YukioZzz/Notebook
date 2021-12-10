@@ -3,6 +3,18 @@
     echo "running benchmark"
     ./benchmark.sh | grep Requests/sec | awk '{print $2}' > bench.out
 
+### zsh
+
+    wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+    sh install.sh
+    vi ~/.zshrc
+
+plugins:
+
+    git clone git://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+    git clone git://github.com/wting/autojump.git && cd autojump && ./install.py 
+
 ### single/double quote and parentheses
 
 - 单引号即原封不动保持原样

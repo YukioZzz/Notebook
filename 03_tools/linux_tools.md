@@ -26,3 +26,14 @@ lsof maybe invalid when the port is occupied by other user
 so use the following cmd
 
     sudo netstat -tulpn
+
+### check disk usage
+Show information about the file system on which each FILE resides,
+or all file systems by default. e.g.
+
+    df -h
+
+Summarize disk usage of the set of FILEs, recursively for directories.  e.g.
+
+    du -sh
+
