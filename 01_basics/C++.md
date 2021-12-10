@@ -1298,10 +1298,120 @@ int main(){
 - 前进后退： `auto nx = std::next(it, 2); auto pv = std::prev(it, 2);`此处可以是负值，边界条件注意下
 - 上述俩函数实现原理实际是基于`advance`: ../`void advance( InputIt& it, Distance n );`
 
-#### 各个容器的基本操作
-特别注意map等容器删除
+非RandomIt似乎不会重载+n操作，如map的iterator重载++/--，但没有+n
+另可借鉴[blog](http://ibillxia.github.io/blog/2014/06/21/stl-source-insight-2-iterators-and-traits/)
+```C++
+/*iterator tag*/
+struct input_iterator_tag {};                                       //只读
+struct output_iterator_tag {};                                      //只写
+struct forward_iterator_tag : public input_iterator_tag {};         //forward_list; 读写，支持++重载
+struct bidirectional_iterator_tag : forward_iterator_tag {};        //list, set, map; 读写，支持++/--重载
+struct random_access_iterator_tag : bidirectional_iterator_tag {};  //array, vector, deque; 读写，支持p+n, p-n, p[n], p1-p2, p1+p2
+struct contiguous_iterator_tag
+```
 
-List的操作如LRU的实现
+iterator traits:
+```C++
+// In file stl_iterator_base.h
+template <class _Category, class _Tp, class _Distance = ptrdiff_t,
+          class _Pointer = _Tp*, class _Reference = _Tp&>
+struct iterator {
+    typedef _Category  iterator_category;
+    typedef _Tp        value_type;
+    typedef _Distance  difference_type;
+    typedef _Pointer   pointer;
+    typedef _Reference reference;
+};
+```
+
+#### 各个容器的基本操作
+特别注意map等容器删除，这两种方式里`it++`都不放在for循环体内部，而是进行判断后再决定
+
+1. 使用删除元素之前的迭代器定义下一个元素(注：`vector<>`不能用此种方式，因为erase后后序节点全部前移了);
+此处利用it++展开为`{temp=it;++it;return temp;}`的原理
+```C++
+for(auto it=mymap.begin(); it!=mymap.end();) {
+    if (it->first == target) {
+        mymap.erase(it++); //here is the key
+    } else {
+        it++;
+    }
+}
+
+2. 使用erase()返回下一个元素的迭代器
+```C++
+for(auto it=mymap.begin(); it!=mymap.end();) {
+    if (it->first == target) {
+        it = mymap.erase(it);
+    } else {
+        it++;
+    }
+}
+```
+
+
+List的操作如LRU的实现，如下
+
+```C++
+/*
+这里用到了list<>的push_back(), back(), push_front(), begin(), splice等方法
+以及unordered_map<>的count(), operator [](), erase()方法，以及访问pair时可以使用first/second。
+*/
+class LRUCache {
+private:
+    list<int> mylist;                                       //按访问顺序存储key
+    unordered_map<int,pair<int,list<int>::iterator>> mymap; //K-V对中加入节点的迭代器，便于访问
+    int capacity;
+public:
+    LRUCache(int capacity) {
+        this->capacity = capacity;
+    }
+    
+    int get(int key) {
+        if(mymap.count(key)){
+            auto [val,iter] = mymap[key];
+            updateKey(iter);
+            return val;
+        }
+        return -1;
+    }
+    
+    void put(int key, int value) {
+        list<int>::iterator iter;
+        if(!mymap.count(key)){
+            getRoom();
+            mylist.push_front(key);                 //直接头插
+            iter= mylist.begin();
+        }else{
+            iter = mymap[key].second;
+        }
+            mymap[key]=pair(value,iter);
+            updateKey(iter);                        //将key优先级从原任意位置提至最高，list最为方便
+    }
+private:
+    /*
+     * 关键点在于没法操作节点的prev和next指针做头插法，虽然当然可以先erase(iter)后再头插更新map
+     * list提供了splice接口，注释如下：
+     *  std::list::splice  =>  Transfer elements from list to list
+     *  Transfers elements from x into the container, inserting them at position.
+     *  This effectively inserts those elements into the container and removes them from x, altering
+     * the sizes of both containers.
+     */
+    void updateKey(list<int>::iterator iter){
+        mylist.splice(mylist.begin(),mylist,iter); //move iter in mylist before mylist.begin()
+    }
+    /* 
+     * 当size满时，将末位key删除
+     * 所以其实不需要记录时间(可能同时间戳多个请求)，或显式优先级自增（可能爆表），实际直接构建key (bidirectional) list即可
+     */
+    void getRoom(){     
+        if(mymap.size()==capacity){
+            mymap.erase(mylist.back());
+            mylist.pop_back();
+        }
+    }
+};
+```
 
 ### STL 算法
 

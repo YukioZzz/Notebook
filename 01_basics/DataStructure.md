@@ -489,6 +489,123 @@ sort(a, gt + 1, hi);
 ```
 
 #### 堆排序
+```C++
+/* 大顶堆
+ * usage: 
+ * heap nheap({7,6,5,4,3,2,1});
+ * nheap.heapify()/pop()/heapSort();
+ */
+class heap{
+    vector<int> m_vec;
+
+    /*      0
+     *     1 2
+     *    34 56
+     *   parent = (idx-1)/2
+     */
+    int getParent(int idx){
+    	return (idx-1)>>1;
+    }
+
+    /*
+     * 将最后一个元素上滤; 用交替赋值代替交换
+     */
+    void upPercolation(int idx){
+        if(idx<1)return;
+        int val = m_vec[idx];
+        while(idx>0 && m_vec[getParent(idx)] < val){
+            m_vec[idx] = m_vec[getParent(idx)];
+            idx = getParent(idx);
+        }
+        m_vec[idx] = val;
+    }
+
+
+    /*
+     * 需要取最小/最大的孩子做置换
+     * ProperParent(): 在n的索引范围里对节点idx及其子节点中选出可为Parent的节点
+     */
+    int ProperParent(int idx, int n, int val){
+        int rchild = (idx+1)*2; //idx*2-1;  注意这俩不对
+    	int lchild = rchild-1;  //idx*3;
+        if(rchild<n){
+	        int biggerIdx = m_vec[lchild] > m_vec[rchild]? lchild : rchild;
+	        return m_vec[biggerIdx] >  val ? biggerIdx : idx;
+	    }else if(lchild<n){
+	        return m_vec[lchild] > val ? lchild : idx;
+	    }else{
+	        return idx; 
+        }
+    }
+   
+    /* 
+     * 重新定义接口与实现如下, 实现简洁高效
+     * 定义为将索引为idx的节点进行下滤：在建堆时需要指定idx，在堆排序时需要限定n
+     */
+    void downPercolation(int idx, int n){
+        int pIdx;                                      //idx与其孩子中堪为父者
+        int val = m_vec[idx];
+        while( idx != (pIdx = ProperParent(idx, n, val))){    //当idx子节点更大时
+            m_vec[idx] = m_vec[pIdx]; idx = pIdx;   
+        }
+        m_vec[idx] = val;
+    }
+
+public:
+    template <class T>
+    heap(const T& A){
+        m_vec.assign(A.begin(), A.end());
+    }
+
+    void heapify_(){				//该实现即自上而下的上滤，复杂度O(nlogn)，不可接受，完全可以排序了
+        int size = m_vec.size();
+        int i=1;
+        while(i<size){
+            upPercolation(i);
+            ++i;
+        }		
+    }
+
+    void heapify(){				//转为自下而上的下滤，渐进复杂度O(n)
+        int size = m_vec.size();
+        for(int i = size/2 - 1; 0<=i; --i){
+            downPercolation(i, size);
+        }
+    }    
+
+    /*
+     * make sure that m_vec is not empty();
+     * */
+    int pop(){
+        int size = m_vec.size();
+        if(size==0){
+           // throw exception();
+        }   
+	    int ret = m_vec[0];
+        m_vec[0]=m_vec[--size];	//删除堆顶，代之以末元素
+	    m_vec.pop_back();
+	    downPercolation(0, size);
+	    return ret;
+    }
+    void display(){
+        for(auto val: m_vec){
+            cout<< val<< " ";
+	    }
+    }
+
+    /*
+     * 本地排序
+     */
+    void heapSort(){
+        int n = m_vec.size();
+        heapify();                     //先建堆
+        while(n){
+            swap(m_vec[0],m_vec[--n]);
+            downPercolation(0,n);
+        }
+    }
+};
+```
 
 ### 查找
 
@@ -510,6 +627,10 @@ B树/B+树 |O(log<sub>2</sub>n) |   |
 ---|---|---|---
 [BFS广度优先搜索](https://zh.wikipedia.org/wiki/%E5%B9%BF%E5%BA%A6%E4%BC%98%E5%85%88%E6%90%9C%E7%B4%A2)|邻接矩阵<br/>邻接链表|O(\|v\|<sup>2</sup>)<br/>O(\|v\|+\|E\|)|O(\|v\|<sup>2</sup>)<br/>O(\|v\|+\|E\|)
 [DFS深度优先搜索](https://zh.wikipedia.org/wiki/%E6%B7%B1%E5%BA%A6%E4%BC%98%E5%85%88%E6%90%9C%E7%B4%A2)|邻接矩阵<br/>邻接链表|O(\|v\|<sup>2</sup>)<br/>O(\|v\|+\|E\|)|O(\|v\|<sup>2</sup>)<br/>O(\|v\|+\|E\|)
+
+注意：BFS和DFS的递推形式总结 `@todo`
+
+
 
 ### 其他算法
 
