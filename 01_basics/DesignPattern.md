@@ -13,25 +13,25 @@
 
 [Meyers Singleton](http://laristra.github.io/flecsi/src/developer-guide/patterns/meyers_singleton.html)
 
-```
+```C++
 struct singleton_t
 {
 
-  static
-  singleton_t &
-  instance()
+  static                                                      //static函数，作为类
+  singleton_t &                                               //返回引用
+  instance()                                                  
   {
-    static singleton_t s;
+    static singleton_t s;                                     //局部静态变量，自动调用默认构造函数
     return s;
   } // instance
 
-  singleton_t(const singleton_t &) = delete;
-  singleton_t & operator = (const singleton_t &) = delete;
+  singleton_t(const singleton_t &) = delete;                  //删除复制构造函数，因为只允许有一个实例
+  singleton_t & operator = (const singleton_t &) = delete;    //删除拷贝构造函数，因为只允许有一个实例
 
 private:
 
-  singleton_t() : value_(0) {}
-  ~singleton_t() {}
+  singleton_t() : value_(0) {}                                //私有化默认构造函数
+  ~singleton_t() {}                                           //私有化默认析构函数
   int value_;
 
 }; // struct singleton_t

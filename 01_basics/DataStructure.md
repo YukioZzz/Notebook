@@ -639,3 +639,22 @@ B树/B+树 |O(log<sub>2</sub>n) |   |
 [分治法](https://zh.wikipedia.org/wiki/%E5%88%86%E6%B2%BB%E6%B3%95)|把一个复杂的问题分成两个或更多的相同或相似的子问题，直到最后子问题可以简单的直接求解，原问题的解即子问题的解的合并|[循环赛日程安排问题](https://github.com/huihut/interview/tree/master/Problems/RoundRobinProblem)、排序算法（快速排序、归并排序）
 [动态规划](https://zh.wikipedia.org/wiki/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92)|通过把原问题分解为相对简单的子问题的方式求解复杂问题的方法，适用于有重叠子问题和最优子结构性质的问题|[背包问题](https://github.com/huihut/interview/tree/master/Problems/KnapsackProblem)、斐波那契数列
 [贪心法](https://zh.wikipedia.org/wiki/%E8%B4%AA%E5%BF%83%E6%B3%95)|一种在每一步选择中都采取在当前状态下最好或最优（即最有利）的选择，从而希望导致结果是最好或最优的算法|旅行推销员问题（最短路径问题）、最小生成树、哈夫曼编码
+
+
+
+### 串
+1. 字符串匹配(参考[文章](https://www.zhihu.com/question/21923021))
+Brute-Force 的复杂度是 O(nm)的，对此做改进，由于实际很难降低字符串比较的复杂度，所以应该尝试降低比较的趟数，尽可能利用残余信息。
+每一次失败的匹配实际都能带来一些有用信息，如主串的某一个子串等于模式串的某一个前缀。
+![failure_trial](https://pic1.zhimg.com/80/v2-7dc61b0836af61e302d9474eeeecfe83_720w.jpg?source=1940ef5c)
+
+使用next数组作为标尺，这里记录了最长前后相等的串
+
+![correspondence](https://pic2.zhimg.com/80/v2-6ddb50d021e9fa660b5add8ea225383a_720w.jpg?source=1940ef5c)
+
+e.g.最后个a失效后[ababa]移动2
+
+
+或称之为部分匹配表(Partial Match Table)： PMT中的值是字符串的前缀集合与后缀集合的交集中最长元素的长度。(不包含字符串本身)
+
+
