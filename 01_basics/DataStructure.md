@@ -657,4 +657,23 @@ e.g.最后个a失效后[ababa]移动2
 
 或称之为部分匹配表(Partial Match Table)： PMT中的值是字符串的前缀集合与后缀集合的交集中最长元素的长度。(不包含字符串本身)
 
+#### Karp-Rabin算法: 串即是数
+需要注意溢出问题，有几种思路
+1. 可尝试`unsigned long long`等
+2. 取模，则会引入哈希碰撞，可采用如下方式改进
+   - 双哈希，即采用不同进制和模数，类似布隆过滤器
+   - 拉链法，存储存储每个key对应的head,length,即`unordered_map<nt, list<pair>>`
 
+```C++
+    void getHash(const string& s,int idx, int& hashcode){
+        int digit;
+        if(idx==0){
+            for(int i=0;i<10;++i)
+                hashcode = (hashcode * base + getDigit(s[i]));
+            return;
+        }
+        hashcode = (hashcode - getDigit(s[idx-1])*topWeight);
+        //if(hashcode<0)hashcode+=mod;
+        hashcode = (hashcode * base + getDigit(s[idx+9]));
+    }
+```
