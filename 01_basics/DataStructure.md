@@ -489,6 +489,123 @@ sort(a, gt + 1, hi);
 ```
 
 #### 堆排序
+```C++
+/* 大顶堆
+ * usage: 
+ * heap nheap({7,6,5,4,3,2,1});
+ * nheap.heapify()/pop()/heapSort();
+ */
+class heap{
+    vector<int> m_vec;
+
+    /*      0
+     *     1 2
+     *    34 56
+     *   parent = (idx-1)/2
+     */
+    int getParent(int idx){
+    	return (idx-1)>>1;
+    }
+
+    /*
+     * 将最后一个元素上滤; 用交替赋值代替交换
+     */
+    void upPercolation(int idx){
+        if(idx<1)return;
+        int val = m_vec[idx];
+        while(idx>0 && m_vec[getParent(idx)] < val){
+            m_vec[idx] = m_vec[getParent(idx)];
+            idx = getParent(idx);
+        }
+        m_vec[idx] = val;
+    }
+
+
+    /*
+     * 需要取最小/最大的孩子做置换
+     * ProperParent(): 在n的索引范围里对节点idx及其子节点中选出可为Parent的节点
+     */
+    int ProperParent(int idx, int n, int val){
+        int rchild = (idx+1)*2; //idx*2-1;  注意这俩不对
+    	int lchild = rchild-1;  //idx*3;
+        if(rchild<n){
+	        int biggerIdx = m_vec[lchild] > m_vec[rchild]? lchild : rchild;
+	        return m_vec[biggerIdx] >  val ? biggerIdx : idx;
+	    }else if(lchild<n){
+	        return m_vec[lchild] > val ? lchild : idx;
+	    }else{
+	        return idx; 
+        }
+    }
+   
+    /* 
+     * 重新定义接口与实现如下, 实现简洁高效
+     * 定义为将索引为idx的节点进行下滤：在建堆时需要指定idx，在堆排序时需要限定n
+     */
+    void downPercolation(int idx, int n){
+        int pIdx;                                      //idx与其孩子中堪为父者
+        int val = m_vec[idx];
+        while( idx != (pIdx = ProperParent(idx, n, val))){    //当idx子节点更大时
+            m_vec[idx] = m_vec[pIdx]; idx = pIdx;   
+        }
+        m_vec[idx] = val;
+    }
+
+public:
+    template <class T>
+    heap(const T& A){
+        m_vec.assign(A.begin(), A.end());
+    }
+
+    void heapify_(){				//该实现即自上而下的上滤，复杂度O(nlogn)，不可接受，完全可以排序了
+        int size = m_vec.size();
+        int i=1;
+        while(i<size){
+            upPercolation(i);
+            ++i;
+        }		
+    }
+
+    void heapify(){				//转为自下而上的下滤，渐进复杂度O(n)
+        int size = m_vec.size();
+        for(int i = size/2 - 1; 0<=i; --i){
+            downPercolation(i, size);
+        }
+    }    
+
+    /*
+     * make sure that m_vec is not empty();
+     * */
+    int pop(){
+        int size = m_vec.size();
+        if(size==0){
+           // throw exception();
+        }   
+	    int ret = m_vec[0];
+        m_vec[0]=m_vec[--size];	//删除堆顶，代之以末元素
+	    m_vec.pop_back();
+	    downPercolation(0, size);
+	    return ret;
+    }
+    void display(){
+        for(auto val: m_vec){
+            cout<< val<< " ";
+	    }
+    }
+
+    /*
+     * 本地排序
+     */
+    void heapSort(){
+        int n = m_vec.size();
+        heapify();                     //先建堆
+        while(n){
+            swap(m_vec[0],m_vec[--n]);
+            downPercolation(0,n);
+        }
+    }
+};
+```
 
 ### 查找
 
@@ -511,6 +628,10 @@ B树/B+树 |O(log<sub>2</sub>n) |   |
 [BFS广度优先搜索](https://zh.wikipedia.org/wiki/%E5%B9%BF%E5%BA%A6%E4%BC%98%E5%85%88%E6%90%9C%E7%B4%A2)|邻接矩阵<br/>邻接链表|O(\|v\|<sup>2</sup>)<br/>O(\|v\|+\|E\|)|O(\|v\|<sup>2</sup>)<br/>O(\|v\|+\|E\|)
 [DFS深度优先搜索](https://zh.wikipedia.org/wiki/%E6%B7%B1%E5%BA%A6%E4%BC%98%E5%85%88%E6%90%9C%E7%B4%A2)|邻接矩阵<br/>邻接链表|O(\|v\|<sup>2</sup>)<br/>O(\|v\|+\|E\|)|O(\|v\|<sup>2</sup>)<br/>O(\|v\|+\|E\|)
 
+注意：BFS和DFS的递推形式总结 `@todo`
+
+
+
 ### 其他算法
 
 算法 |思想| 应用
@@ -518,3 +639,41 @@ B树/B+树 |O(log<sub>2</sub>n) |   |
 [分治法](https://zh.wikipedia.org/wiki/%E5%88%86%E6%B2%BB%E6%B3%95)|把一个复杂的问题分成两个或更多的相同或相似的子问题，直到最后子问题可以简单的直接求解，原问题的解即子问题的解的合并|[循环赛日程安排问题](https://github.com/huihut/interview/tree/master/Problems/RoundRobinProblem)、排序算法（快速排序、归并排序）
 [动态规划](https://zh.wikipedia.org/wiki/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92)|通过把原问题分解为相对简单的子问题的方式求解复杂问题的方法，适用于有重叠子问题和最优子结构性质的问题|[背包问题](https://github.com/huihut/interview/tree/master/Problems/KnapsackProblem)、斐波那契数列
 [贪心法](https://zh.wikipedia.org/wiki/%E8%B4%AA%E5%BF%83%E6%B3%95)|一种在每一步选择中都采取在当前状态下最好或最优（即最有利）的选择，从而希望导致结果是最好或最优的算法|旅行推销员问题（最短路径问题）、最小生成树、哈夫曼编码
+
+
+
+### 串
+1. 字符串匹配(参考[文章](https://www.zhihu.com/question/21923021))
+Brute-Force 的复杂度是 O(nm)的，对此做改进，由于实际很难降低字符串比较的复杂度，所以应该尝试降低比较的趟数，尽可能利用残余信息。
+每一次失败的匹配实际都能带来一些有用信息，如主串的某一个子串等于模式串的某一个前缀。
+![failure_trial](https://pic1.zhimg.com/80/v2-7dc61b0836af61e302d9474eeeecfe83_720w.jpg?source=1940ef5c)
+
+使用next数组作为标尺，这里记录了最长前后相等的串
+
+![correspondence](https://pic2.zhimg.com/80/v2-6ddb50d021e9fa660b5add8ea225383a_720w.jpg?source=1940ef5c)
+
+e.g.最后个a失效后[ababa]移动2
+
+
+或称之为部分匹配表(Partial Match Table)： PMT中的值是字符串的前缀集合与后缀集合的交集中最长元素的长度。(不包含字符串本身)
+
+#### Karp-Rabin算法: 串即是数
+需要注意溢出问题，有几种思路
+1. 可尝试`unsigned long long`等
+2. 取模，则会引入哈希碰撞，可采用如下方式改进
+   - 双哈希，即采用不同进制和模数，类似布隆过滤器
+   - 拉链法，存储存储每个key对应的head,length,即`unordered_map<nt, list<pair>>`
+
+```C++
+    void getHash(const string& s,int idx, int& hashcode){
+        int digit;
+        if(idx==0){
+            for(int i=0;i<10;++i)
+                hashcode = (hashcode * base + getDigit(s[i]));
+            return;
+        }
+        hashcode = (hashcode - getDigit(s[idx-1])*topWeight);
+        //if(hashcode<0)hashcode+=mod;
+        hashcode = (hashcode * base + getDigit(s[idx+9]));
+    }
+```
