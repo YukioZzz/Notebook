@@ -29,7 +29,7 @@ plugins:
 reference to this [link](https://stackoverflow.com/questions/5163144/what-are-the-special-dollar-sign-shell-variables)
     
 - `$1`, `$2`, `$3`, ... are the positional parameters.
-- `$@` is an array-like construct of all positional parameters, {$1, $2, $3 ...}.
+- `$@` is an array-like construct of all positional parameters expect `$0`: {$1, $2, $3 ...}.
 - `$*` is the IFS expansion of all positional parameters, $1 $2 $3 ....
 - `$#` is the number of positional parameters.
 - `$-` current options set for the shell.
@@ -100,3 +100,12 @@ do
     esac
 done
 ```
+
+### 命令
+可通过`man bash`查看
+
+   -z string
+       True if the length of string is zero.
+
+### 括号
+参见[blog](https://blog.csdn.net/tttyd/article/details/11742241)

@@ -59,4 +59,9 @@ rm all images with the name none
 
     docker images | grep none | awk '{ print $3;}' | xargs docker rmi
 
+### docker-compose not printing stdout in Python app
+
+[reference](https://stackoverflow.com/questions/51362213/docker-compose-not-printing-stdout-in-python-app)
+
+we need to add explicit `flush`
 

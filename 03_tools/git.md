@@ -4,6 +4,8 @@
 
     git clone git@github.com:YOUR-USERNAME/YOUR-FORKED-REPO.git
 
+in particular, use `--depth <depth>` to create a shadow clone
+
 #### 2. Add remote from original repository in your forked repository: 
 
     cd into/cloned/fork-repo
@@ -58,4 +60,11 @@ usage(-p[num] tells the patch command to skip 3 leading slashes from the filenam
 
     git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch targetFile' --prune-empty --tag-name-filter cat -- --all
 
-
+### What if there are changes both at local and remote repo
+- if have the total permission:
+  - git commit
+  - git pull --rebase (or git fetch + git merge/rebase [specify_branch])
+- otherwise:
+  - git stash
+  - git pull
+  - git stash pop
